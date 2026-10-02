@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 
 import {
   obtenerVideo,
@@ -9,80 +9,102 @@ import {
 
 function VideoPlayer() {
   const { id } = useParams();
-  const navigate = useNavigate();
 
   const [video, setVideo] = useState(null);
   const [comentarios, setComentarios] = useState([]);
-  const [nuevoComentario, setNuevoComentario] = useState("");
-  const [cargando, setCargando] = useState(true);
 
-  const usuario = JSON.parse(localStorage.getItem("user"));
+  const [comentario, setComentario] = useState("");
+
+  const [error, setError] = useState("");
+  const [mensaje, setMensaje] = useState("");
 
   useEffect(() => {
     cargarVideo();
     cargarComentarios();
   }, [id]);
 
-  const cargarVideo = async () => {
+  async function cargarVideo() {
     try {
       const datos = await obtenerVideo(id);
       setVideo(datos);
     } catch (error) {
-      console.error(error);
-    } finally {
-      setCargando(false);
+      setError(error.message);
     }
-  };
+  }
 
-  const cargarComentarios = async () => {
+  async function cargarComentarios() {
     try {
       const datos = await obtenerComentarios(id);
       setComentarios(datos);
     } catch (error) {
-      console.error(error);
+      console.log(error);
     }
-  };
+  }
 
-  const enviarComentario = async (e) => {
+  async function publicarComentario(e) {
     e.preventDefault();
 
-    if (!nuevoComentario.trim()) {
+    setMensaje("");
+
+    if (!comentario.trim()) {
+      setMensaje("Escribe un comentario.");
       return;
     }
 
-    if (!usuario) {
-      alert("Debes iniciar sesión para comentar");
+    // Obtener usuario que inició sesión
+    const usuarioGuardado = localStorage.getItem("user");
+
+    if (!usuarioGuardado) {
+      setMensaje("Debes iniciar sesión para comentar.");
       return;
     }
+
+    const usuario = JSON.parse(usuarioGuardado);
 
     try {
-      await crearComentario(id, {
-        content: nuevoComentario,
+      const nuevoComentario = await crearComentario(id, {
+        content: comentario,
         user_id: usuario.id,
       });
 
-      setNuevoComentario("");
+      setComentarios((comentariosActuales) => [
+        ...comentariosActuales,
+        nuevoComentario,
+      ]);
 
-      await cargarComentarios();
+      setComentario("");
+
+      setMensaje(
+        "Comentario publicado correctamente."
+      );
 
     } catch (error) {
-      alert(error.message);
+      setMensaje(error.message);
     }
-  };
+  }
 
-  if (cargando) {
-    return <p>Cargando video...</p>;
+  if (error) {
+    return (
+      <div>
+        <p>{error}</p>
+
+        <Link to="/home">
+          ← Volver
+        </Link>
+      </div>
+    );
   }
 
   if (!video) {
-    return <p>No se encontró el video.</p>;
+    return <p>Cargando video...</p>;
   }
 
   return (
     <div>
-      <button onClick={() => navigate("/home")}>
+
+      <Link to="/home">
         ← Volver
-      </button>
+      </Link>
 
       <h1>{video.title}</h1>
 
@@ -98,52 +120,68 @@ function VideoPlayer() {
 
       <h2>Video</h2>
 
-      <iframe
+      <video
+        controls
         width="800"
-        height="450"
-        src={video.video_url
-          .replace(
-            "https://youtu.be/",
-            "https://www.youtube.com/embed/"
-          )
-          .split("?")[0]}
-        title={video.title}
-        allowFullScreen
-      ></iframe>
+        src={video.video_url}
+      >
+        Tu navegador no puede reproducir este video.
+      </video>
 
       <h2>Comentarios</h2>
 
-      <form onSubmit={enviarComentario}>
-        <input
-          type="text"
-          placeholder="Escribe un comentario"
-          value={nuevoComentario}
+      <form onSubmit={publicarComentario}>
+
+        <textarea
+          value={comentario}
           onChange={(e) =>
-            setNuevoComentario(e.target.value)
+            setComentario(e.target.value)
           }
+          placeholder="Escribe un comentario..."
+          rows="4"
+          cols="50"
         />
 
+        <br />
+
         <button type="submit">
-          Comentar
+          Publicar comentario
         </button>
+
       </form>
 
-      <br />
+      {mensaje && (
+        <p>
+          {mensaje}
+        </p>
+      )}
+
+      <hr />
 
       {comentarios.length === 0 ? (
-        <p>No hay comentarios todavía.</p>
+        <p>
+          No hay comentarios todavía.
+        </p>
       ) : (
-        <div>
-          {comentarios.map((comentario) => (
-            <div key={comentario.id}>
-              <p>
-                <strong>Usuario {comentario.user_id}:</strong>{" "}
-                {comentario.content}
-              </p>
-            </div>
-          ))}
-        </div>
+        comentarios.map((comentario) => (
+          <div key={comentario.id}>
+
+            <p>
+              <strong>
+                {comentario.user_name}
+              </strong>
+            </p>
+
+            <p>
+              {comentario.content}
+            </p>
+
+            <hr />
+
+          </div>
+        ))
       )}
+
     </div>
   );
 }

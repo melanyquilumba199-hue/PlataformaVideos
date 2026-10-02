@@ -14,9 +14,13 @@ function Login() {
     e.preventDefault();
 
     if (modoRegistro) {
+      // ================================
+      // REGISTRO
+      // ================================
+
       try {
         const respuesta = await fetch(
-          "http://127.0.0.1:8000/users/",
+          "http://174.129.85.233:8000/users/",
           {
             method: "POST",
             headers: {
@@ -49,9 +53,13 @@ function Login() {
       }
 
     } else {
+      // ================================
+      // LOGIN
+      // ================================
+
       try {
         const respuesta = await fetch(
-          "http://127.0.0.1:8000/users/login",
+          "http://174.129.85.233:8000/users/login",
           {
             method: "POST",
             headers: {
@@ -67,15 +75,23 @@ function Login() {
         const datos = await respuesta.json();
 
         if (!respuesta.ok) {
-          alert(datos.detail || "Correo o contraseña incorrectos");
+          alert(
+            datos.detail ||
+            "Correo o contraseña incorrectos"
+          );
+
           return;
         }
 
+        // Guardar usuario
+        localStorage.setItem(
+          "user",
+          JSON.stringify(datos)
+        );
+
         alert(`Bienvenida ${datos.name}`);
 
-        localStorage.setItem("user", JSON.stringify(datos));
-
-        // Ir a la página principal
+        // Ir a Home
         navigate("/home");
 
       } catch (error) {
@@ -86,51 +102,76 @@ function Login() {
 
   return (
     <div className="login-container">
+
       <div className="login-box">
 
-        <h1>Plataforma de Videos</h1>
+        <h1>
+          Plataforma de Videos
+        </h1>
 
         <h2>
-          {modoRegistro ? "Crear cuenta" : "Iniciar sesión"}
+          {modoRegistro
+            ? "Crear cuenta"
+            : "Iniciar sesión"}
         </h2>
 
         <form onSubmit={manejarSubmit}>
+
+          {/* NOMBRE */}
 
           {modoRegistro && (
             <input
               type="text"
               placeholder="Nombre"
               value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
+              onChange={(e) =>
+                setNombre(e.target.value)
+              }
               required
             />
           )}
+
+          {/* CORREO */}
 
           <input
             type="email"
             placeholder="Correo"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) =>
+              setEmail(e.target.value)
+            }
             required
           />
+
+          {/* CONTRASEÑA */}
 
           <input
             type="password"
             placeholder="Contraseña"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) =>
+              setPassword(e.target.value)
+            }
             required
           />
 
+          {/* BOTÓN */}
+
           <button type="submit">
-            {modoRegistro ? "Registrarse" : "Iniciar sesión"}
+            {modoRegistro
+              ? "Registrarse"
+              : "Iniciar sesión"}
           </button>
 
         </form>
 
+        {/* CAMBIAR ENTRE LOGIN Y REGISTRO */}
+
         <button
           className="secondary-button"
-          onClick={() => setModoRegistro(!modoRegistro)}
+          onClick={() =>
+            setModoRegistro(!modoRegistro)
+          }
         >
           {modoRegistro
             ? "Ya tengo una cuenta"
@@ -138,6 +179,7 @@ function Login() {
         </button>
 
       </div>
+
     </div>
   );
 }

@@ -31,11 +31,21 @@ function Home() {
   };
 
   return (
-    <div>
-      <header>
-        <h1>Plataforma de Videos</h1>
+    <div className="home-container">
 
-        <nav>
+      <header className="home-header">
+        <div>
+          <h1>Plataforma de Videos</h1>
+
+          {usuario && (
+            <p>
+              Bienvenida, <strong>{usuario.name}</strong>
+            </p>
+          )}
+        </div>
+
+        <nav className="home-nav">
+
           <button onClick={() => navigate("/home")}>
             Inicio
           </button>
@@ -51,23 +61,29 @@ function Home() {
           <button onClick={cerrarSesion}>
             Cerrar sesión
           </button>
+
         </nav>
       </header>
 
-      <main>
-        <h2>Videos</h2>
+      <main className="home-content">
 
-        {usuario && <p>Bienvenida, {usuario.name}</p>}
+        <h2>Videos disponibles</h2>
 
         {cargando ? (
           <p>Cargando videos...</p>
         ) : videos.length === 0 ? (
           <p>No hay videos disponibles todavía.</p>
         ) : (
+
           <div className="videos-grid">
+
             {videos.map((video) => (
-              <div className="video-card" key={video.id}>
-                
+
+              <div
+                className="video-card"
+                key={video.id}
+              >
+
                 {video.thumbnail_url ? (
                   <img
                     src={video.thumbnail_url}
@@ -80,24 +96,38 @@ function Home() {
                   </div>
                 )}
 
-                <h3>{video.title}</h3>
+                <div className="video-card-content">
 
-                <p>{video.description}</p>
+                  <h3>{video.title}</h3>
 
-                <p>
-                  <strong>Vistas:</strong> {video.views}
-                </p>
+                  <p>
+                    {video.description || "Sin descripción"}
+                  </p>
 
-                <button
-                  onClick={() => navigate(`/video/${video.id}`)}
-                >
-                  Ver video
-                </button>
+                  <p className="video-views">
+                    👁️ {video.views} vistas
+                  </p>
+
+                  <button
+                    onClick={() =>
+                      navigate(`/video/${video.id}`)
+                    }
+                  >
+                    Ver video
+                  </button>
+
+                </div>
+
               </div>
+
             ))}
+
           </div>
+
         )}
+
       </main>
+
     </div>
   );
 }

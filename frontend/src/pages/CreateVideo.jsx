@@ -4,120 +4,155 @@ import { useNavigate } from "react-router-dom";
 function CreateVideo() {
   const navigate = useNavigate();
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [titulo, setTitulo] = useState("");
+  const [descripcion, setDescripcion] = useState("");
   const [video, setVideo] = useState(null);
-  const [thumbnail, setThumbnail] = useState(null);
+  const [miniatura, setMiniatura] = useState(null);
 
-  const usuario = JSON.parse(localStorage.getItem("user"));
+  const [mensaje, setMensaje] = useState("");
+  const [cargando, setCargando] = useState(false);
 
-  const publicarVideo = async (e) => {
+  async function publicarVideo(e) {
     e.preventDefault();
 
-    if (!usuario) {
-      alert("Debes iniciar sesión");
-      navigate("/");
+    setMensaje("");
+
+    const usuarioGuardado = localStorage.getItem("user");
+
+    if (!usuarioGuardado) {
+      setMensaje("Debes iniciar sesión para publicar un video.");
       return;
     }
 
+    const usuario = JSON.parse(usuarioGuardado);
+
     if (!video) {
-      alert("Selecciona un video .mp4");
+      setMensaje("Selecciona un video.");
       return;
+    }
+
+    const formulario = new FormData();
+
+    formulario.append("title", titulo);
+    formulario.append("description", descripcion);
+    formulario.append("user_id", usuario.id);
+    formulario.append("video", video);
+
+    if (miniatura) {
+      formulario.append("thumbnail", miniatura);
     }
 
     try {
-      const formulario = new FormData();
+      setCargando(true);
 
-      formulario.append("title", title);
-      formulario.append("description", description);
-      formulario.append("video", video);
+      const respuesta = await fetch(
+        "http://174.129.85.233:8000/videos/",
+        {
+          method: "POST",
+          body: formulario,
+        }
+      );
 
-      if (thumbnail) {
-        formulario.append("thumbnail", thumbnail);
+      const datos = await respuesta.json();
+
+      if (!respuesta.ok) {
+        setMensaje(
+          datos.detail || "No se pudo publicar el video."
+        );
+        return;
       }
 
-      formulario.append("user_id", usuario.id);
+      setMensaje("Video publicado correctamente.");
 
-      // Por ahora solo comprobamos que los datos estén preparados.
-      console.log("Video:", video);
-      console.log("Miniatura:", thumbnail);
-      console.log("Título:", title);
-      console.log("Descripción:", description);
-      console.log("Usuario:", usuario.id);
+      setTitulo("");
+      setDescripcion("");
+      setVideo(null);
+      setMiniatura(null);
 
-      alert("El archivo está listo para enviarse a FastAPI");
+      setTimeout(() => {
+        navigate("/home");
+      }, 1500);
 
     } catch (error) {
-      console.error(error);
-      alert("Ocurrió un error");
+      setMensaje("No se pudo conectar con FastAPI.");
+    } finally {
+      setCargando(false);
     }
-  };
+  }
 
   return (
     <div>
-      <button onClick={() => navigate("/home")}>
-        ← Volver
-      </button>
-
       <h1>Publicar video</h1>
 
       <form onSubmit={publicarVideo}>
-        <label>Título</label>
-        <br />
 
-        <input
-          type="text"
-          placeholder="Título del video"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-        />
+        <div>
+          <label>Título</label>
+          <br />
 
-        <br />
-        <br />
-
-        <label>Descripción</label>
-        <br />
-
-        <textarea
-          placeholder="Descripción del video"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          required
-        />
+          <input
+            type="text"
+            value={titulo}
+            onChange={(e) => setTitulo(e.target.value)}
+            placeholder="Título del video"
+            required
+          />
+        </div>
 
         <br />
-        <br />
 
-        <label>Video (.mp4)</label>
-        <br />
+        <div>
+          <label>Descripción</label>
+          <br />
 
-        <input
-          type="file"
-          accept="video/mp4"
-          onChange={(e) => setVideo(e.target.files[0])}
-          required
-        />
-
-        <br />
-        <br />
-
-        <label>Miniatura</label>
-        <br />
-
-        <input
-          type="file"
-          accept="image/png, image/jpeg"
-          onChange={(e) => setThumbnail(e.target.files[0])}
-        />
+          <textarea
+            value={descripcion}
+            onChange={(e) => setDescripcion(e.target.value)}
+            placeholder="Descripción del video"
+            rows="5"
+          />
+        </div>
 
         <br />
+
+        <div>
+          <label>Video</label>
+          <br />
+
+          <input
+            type="file"
+            accept="video/mp4"
+            onChange={(e) => setVideo(e.target.files[0])}
+            required
+          />
+        </div>
+
         <br />
 
-        <button type="submit">
-          Preparar video
+        <div>
+          <label>Miniatura</label>
+          <br />
+
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setMiniatura(e.target.files[0])}
+          />
+        </div>
+
+        <br />
+
+        <button type="submit" disabled={cargando}>
+          {cargando ? "Publicando..." : "Publicar video"}
         </button>
+
       </form>
+
+      {mensaje && (
+        <p>
+          {mensaje}
+        </p>
+      )}
     </div>
   );
 }

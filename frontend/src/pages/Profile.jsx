@@ -38,7 +38,7 @@ function Profile() {
   const comenzarEdicion = (video) => {
     setEditando(video.id);
     setTitle(video.title);
-    setDescription(video.description);
+    setDescription(video.description || "");
     setVideoUrl(video.video_url);
     setThumbnailUrl(video.thumbnail_url || "");
   };
@@ -56,7 +56,7 @@ function Profile() {
 
     try {
       const respuesta = await fetch(
-        `http://127.0.0.1:8000/videos/${editando}`,
+        `http://174.129.85.233:8000/videos/${editando}`,
         {
           method: "PUT",
           headers: {
@@ -74,7 +74,9 @@ function Profile() {
       const datos = await respuesta.json();
 
       if (!respuesta.ok) {
-        alert(datos.detail || "No se pudo actualizar el video");
+        alert(
+          datos.detail || "No se pudo actualizar el video"
+        );
         return;
       }
 
@@ -100,7 +102,7 @@ function Profile() {
 
     try {
       const respuesta = await fetch(
-        `http://127.0.0.1:8000/videos/${id}`,
+        `http://174.129.85.233:8000/videos/${id}`,
         {
           method: "DELETE",
         }
@@ -109,7 +111,9 @@ function Profile() {
       const datos = await respuesta.json();
 
       if (!respuesta.ok) {
-        alert(datos.detail || "No se pudo eliminar el video");
+        alert(
+          datos.detail || "No se pudo eliminar el video"
+        );
         return;
       }
 
@@ -161,8 +165,10 @@ function Profile() {
         <div>
           {videos.map((video) => (
             <div key={video.id}>
+
               {editando === video.id ? (
                 <form onSubmit={actualizarVideo}>
+
                   <h3>Editar video</h3>
 
                   <label>Título</label>
@@ -188,6 +194,7 @@ function Profile() {
                     onChange={(e) =>
                       setDescription(e.target.value)
                     }
+                    rows="5"
                     required
                   />
 
@@ -233,12 +240,21 @@ function Profile() {
                   >
                     Cancelar
                   </button>
+
                 </form>
               ) : (
                 <div>
+
                   <h3>{video.title}</h3>
 
-                  <p>{video.description}</p>
+                  <p>
+                    {video.description}
+                  </p>
+
+                  <p>
+                    <strong>Vistas:</strong>{" "}
+                    {video.views}
+                  </p>
 
                   <button
                     onClick={() =>
@@ -263,10 +279,12 @@ function Profile() {
                   >
                     Eliminar
                   </button>
+
                 </div>
               )}
 
               <hr />
+
             </div>
           ))}
         </div>
